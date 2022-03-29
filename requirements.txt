@@ -1,0 +1,7 @@
+pandas
+openpyxl
+PyYaml
+joblib
+fsspec
+gcsfs
+scipy
