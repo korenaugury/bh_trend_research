@@ -15,6 +15,8 @@ class Config:
     FEATURES_DATA_PATH: str
     LABELS_DATA_PATH: str
 
+    AVAILABLE_FEATURES: list
+
     SEED: int = 777
 
     def __init__(self, fast_run, pipeline_unique_name=None):
@@ -36,5 +38,7 @@ class Config:
         """
         self.__class__.LABELS_DATA_PATH = os.path.join(ROOT_DIR, 'data_layer', 'prerequisites',
                                                        'trend_cleaned_relabelling.csv')
+
+        self.__class__.AVAILABLE_FEATURES = ['vibration_vel_rms', 'vibration_acc_p2p']
 
 

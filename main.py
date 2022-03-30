@@ -11,9 +11,11 @@ FAST_RUN = True
 
 STEPS = [
     # BHTrendPipeline.load_data,
-    # BHTrendPipeline.split_per_machine,
+    BHTrendPipeline.split_per_machine,
     # BHTrendPipeline.build_records,
-    BHTrendPipeline.calc_slope_and_r2,
+    # BHTrendPipeline.calc_slope_and_r2,
+    # BHTrendPipeline.parse_data_for_model,
+    # BHTrendPipeline.fit_model,
 ]
 
 if __name__ == '__main__':

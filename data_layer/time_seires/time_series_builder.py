@@ -18,10 +18,11 @@ class TimeSeriesBuilder:
         self._time_series_records = None
 
     def split_to_df_per_machine(self):
+        gb_df = self._features_data.groupby('machine_id')
         def parallel_for(idx, machine_id):
             if idx % 10 == 0:
                 print(f"Build records for machine #{idx}")
-            return self._features_data[self._features_data['machine_id'] == machine_id].copy()
+            return gb_df.get_group(machine_id)
 
         self._df_per_machine = Parallel(n_jobs=1)(delayed(parallel_for)(idx, machine_id)
                                                   for idx, machine_id in enumerate(set(self._labels['machine_id'])))

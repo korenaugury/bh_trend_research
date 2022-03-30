@@ -3,6 +3,7 @@ import datetime
 import numpy as np
 import pandas as pd
 
+from configuration.config import Config
 from utils.date_functions import move_date
 
 
@@ -16,8 +17,19 @@ class TimeSeriesRecord:
 
         self._slope = {}
         self._r2 = {}
+        self.trend_scores = {feature: [] for feature in Config.AVAILABLE_FEATURES}
 
         self._build()
+
+    @property
+    def label(self):
+        if self._label['additional_info'] == 'Cliff':
+            return True
+        if pd.isna(self._label['review']):
+            return bool(self._label['orig_review'])
+        if self._label['review'] == 'IGNORE':
+            return None
+        return self._label['review'] == 'True'
 
     def _build(self):
 
@@ -35,7 +47,8 @@ class TimeSeriesRecord:
                                                   (self._time_series_df['bearing'] == bearing)]
                 if not len(bearing_df):
                     continue
-                temperature_series = bearing_df[['datetime', 'temperature_eptemp']][~bearing_df['temperature_eptemp'].isna()]
+                temperature_series = bearing_df[['datetime', 'temperature_eptemp']][
+                    ~bearing_df['temperature_eptemp'].isna()]
                 temperature_series = temperature_series.set_index('datetime')
                 if not len(temperature_series):
                     temperature_series.loc[bearing_df['datetime'].max()] = np.nan
@@ -46,12 +59,13 @@ class TimeSeriesRecord:
                         self.pivot_data[component_id][bearing][f'plane_{plane}'] = {}
                         self._slope[component_id][bearing][f'plane_{plane}'] = {}
                         self._r2[component_id][bearing][f'plane_{plane}'] = {}
-                    for feature in ['vibration_vel_rms', 'vibration_acc_p2p']:
+                    for feature in Config.AVAILABLE_FEATURES:
                         feature_series = bearing_df[['datetime', feature]][bearing_df['plane'] == plane]
                         feature_series = feature_series.set_index('datetime')
                         if not len(feature_series):
                             feature_series.loc[bearing_df['datetime'].max()] = np.nan
-                        self.pivot_data[component_id][bearing][f'plane_{plane}'][feature] = self._fill_time_series(feature_series)
+                        self.pivot_data[component_id][bearing][f'plane_{plane}'][feature] = self._fill_time_series(
+                            feature_series)
 
     @staticmethod
     def _fill_time_series(time_series):
@@ -73,5 +87,4 @@ class TimeSeriesRecord:
     def set_slope_and_r2(self, component_id, bearing, plane, feature, slope, r2):
         self._slope[component_id][bearing][plane][feature] = slope
         self._r2[component_id][bearing][plane][feature] = r2
-
-
+        self.trend_scores[feature].append(abs(slope * r2))

@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 from scipy.stats import linregress
+from sklearn.preprocessing import MinMaxScaler
 
 
 class SlopeCalculator:
@@ -9,7 +10,9 @@ class SlopeCalculator:
         self._time_series_records = time_series_records
 
     def calculate(self):
-        for record in self._time_series_records:
+        for idx, record in enumerate(self._time_series_records):
+            if idx % 50 == 0:
+                print(f"Calculation slope for record #{idx}")
             pivot_data = record.pivot_data
             for component_id in pivot_data:
                 for bearing in pivot_data[component_id]:
@@ -22,8 +25,9 @@ class SlopeCalculator:
                             values = feature_time_series[feature].values
 
                             temp_df = pd.DataFrame({'times': times, 'values': values}).sort_values(by='times')
+                            temp_df['values'] = self._scale(temp_df['values'])
+                            temp_df['values'] = self._remove_outliers(temp_df['values'], percentiles=[0.05, 0.9])
                             temp_df = temp_df[~pd.isna(temp_df['values'])]
-                            temp_df = self._remove_outliers(temp_df, percentiles=[0.05, 0.9])
 
                             if len(temp_df) < 10:
                                 slope, r2 = np.nan, np.nan
@@ -40,10 +44,10 @@ class SlopeCalculator:
                             record.set_slope_and_r2(component_id, bearing, plane, feature, slope, r2)
 
     @staticmethod
-    def _remove_outliers(temp_df, percentiles):
-        temp_df = temp_df[temp_df['values'].between(temp_df.quantile(percentiles[0]).values[0],
-                                                    temp_df.quantile(percentiles[1]).values[0], inclusive=True)]
-        return temp_df
+    def _remove_outliers(values, percentiles):
+        values = values[values.between(values.quantile(percentiles[0]),
+                                       values.quantile(percentiles[1]), inclusive="both")]
+        return values
 
     @staticmethod
     def _moving_average(x, w=12):
@@ -51,9 +55,14 @@ class SlopeCalculator:
 
     @staticmethod
     def _calc_slope(x, smoothed_values):
-        try:
-            results = linregress(list(range(len(x))), smoothed_values)
-        except:
-            bp = 0
+        results = linregress(list(range(len(x))), smoothed_values)
         slope, r2 = results.slope, results.rvalue ** 2
         return slope * len(x), r2
+
+    @staticmethod
+    def _scale(values):
+        if values.max() <= values.min():
+            return values
+        if len(values) < 2:
+            return values
+        return MinMaxScaler(feature_range=(0, 1)).fit_transform(values.values.reshape(-1, 1))

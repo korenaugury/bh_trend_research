@@ -4,6 +4,8 @@ import pandas as pd
 from configuration.config import Config
 from data_layer.processing.slope_calculator import SlopeCalculator
 from data_layer.time_seires.time_series_builder import TimeSeriesBuilder
+from model_layer.model_data_parser import ModelDataParser
+from model_layer.simple_rule_model import SimpleRuleModel
 
 
 class BHTrendPipeline:
@@ -14,6 +16,8 @@ class BHTrendPipeline:
         self._time_series_builder = None
         self._time_series_records = None
         self._slope_calculator = None
+        self._model_data_parser = None
+        self._model = None
 
     def load_data(self):
         self._features_data = pd.read_csv(Config.FEATURES_DATA_PATH)
@@ -37,3 +41,11 @@ class BHTrendPipeline:
     def calc_slope_and_r2(self):
         self._slope_calculator = SlopeCalculator(self._time_series_records)
         self._slope_calculator.calculate()
+
+    def parse_data_for_model(self):
+        self._model_data_parser = ModelDataParser(self._time_series_records, self._labels)
+        self._model_data_parser.parse()
+
+    def fit_model(self):
+        self._model = SimpleRuleModel(target_recall=0.8)
+        self._model.fit(self._model_data_parser.X, self._model_data_parser.y)
