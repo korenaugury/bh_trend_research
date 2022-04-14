@@ -6,3 +6,7 @@ fsspec
 gcsfs
 scipy
 sklearn
+matplotlib
+seaborn
+bson
+pymongo

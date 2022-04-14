@@ -1,1 +1,1 @@
-/configuration/mongodb_credentials.yaml
+/data_layer/utils/mongo_credentials.py

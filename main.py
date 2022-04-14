@@ -7,14 +7,15 @@ from pipeline.pipeline_executor import PipelineExecutor
 CLEAR_HISTORY = False
 SAVE_STATE = True
 
-FAST_RUN = True
+FAST_RUN = False
 
 STEPS = [
     # BHTrendPipeline.load_data,
-    BHTrendPipeline.split_per_machine,
+    # BHTrendPipeline.split_per_machine,
     # BHTrendPipeline.build_records,
     # BHTrendPipeline.calc_slope_and_r2,
-    # BHTrendPipeline.parse_data_for_model,
+    BHTrendPipeline.parse_data_for_model,
+    BHTrendPipeline.analyze,
     # BHTrendPipeline.fit_model,
 ]
 

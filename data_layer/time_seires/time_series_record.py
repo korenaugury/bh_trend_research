@@ -1,19 +1,16 @@
-import datetime
-
-import numpy as np
 import pandas as pd
+from joblib import Parallel, delayed
 
 from configuration.config import Config
-from utils.date_functions import move_date
 
 
 class TimeSeriesRecord:
 
-    def __init__(self, time_series_df: pd.DataFrame, label: pd.Series):
-        self._time_series_df = time_series_df
+    def __init__(self, machine_event_df: pd.DataFrame, label: pd.Series):
+        self._machine_event_df = machine_event_df
         self._label = label
 
-        self.pivot_data = {}
+        self.time_serieses = []
 
         self._slope = {}
         self._r2 = {}
@@ -23,9 +20,9 @@ class TimeSeriesRecord:
 
     @property
     def label(self):
-        if self._label['additional_info'] == 'Cliff':
-            return True
         if pd.isna(self._label['review']):
+            if pd.isna(self._label['orig_review']):
+                return 'TN'
             return bool(self._label['orig_review'])
         if self._label['review'] == 'IGNORE':
             return None
@@ -33,58 +30,32 @@ class TimeSeriesRecord:
 
     def _build(self):
 
-        for component_id in self._time_series_df['component_id'].unique():
-            if component_id not in self.pivot_data:
-                self.pivot_data[component_id] = {}
-                self._slope[component_id] = {}
-                self._r2[component_id] = {}
-            for bearing in self._time_series_df['bearing'].unique():
-                if bearing not in self.pivot_data[component_id]:
-                    self.pivot_data[component_id][bearing] = {}
-                    self._slope[component_id][bearing] = {}
-                    self._r2[component_id][bearing] = {}
-                bearing_df = self._time_series_df[(self._time_series_df['component_id'] == component_id) &
-                                                  (self._time_series_df['bearing'] == bearing)]
-                if not len(bearing_df):
-                    continue
-                temperature_series = bearing_df[['datetime', 'temperature_eptemp']][
-                    ~bearing_df['temperature_eptemp'].isna()]
-                temperature_series = temperature_series.set_index('datetime')
-                if not len(temperature_series):
-                    temperature_series.loc[bearing_df['datetime'].max()] = np.nan
-                self.pivot_data[component_id][bearing]['temperature'] = self._fill_time_series(temperature_series)
+        gb_df = self._machine_event_df.groupby(['machine_id', 'component_id', 'bearing', 'plane'])
+        meta_columns = ['component_id', 'bearing', 'plane', 'session_id']
 
-                for plane in range(3):
-                    if f'plane_{plane}' not in self.pivot_data[component_id][bearing]:
-                        self.pivot_data[component_id][bearing][f'plane_{plane}'] = {}
-                        self._slope[component_id][bearing][f'plane_{plane}'] = {}
-                        self._r2[component_id][bearing][f'plane_{plane}'] = {}
-                    for feature in Config.AVAILABLE_FEATURES:
-                        feature_series = bearing_df[['datetime', feature]][bearing_df['plane'] == plane]
-                        feature_series = feature_series.set_index('datetime')
-                        if not len(feature_series):
-                            feature_series.loc[bearing_df['datetime'].max()] = np.nan
-                        self.pivot_data[component_id][bearing][f'plane_{plane}'][feature] = self._fill_time_series(
-                            feature_series)
+        def parallel_for(group):
+            df = gb_df.get_group(group)
+            df.set_index('datetime', inplace=True)
+            df = df[meta_columns + Config.AVAILABLE_FEATURES]
+            return df
 
-    @staticmethod
-    def _fill_time_series(time_series):
+        self.time_serieses = Parallel(n_jobs=1)(delayed(parallel_for)(group)
+                                                for group in gb_df.groups)
 
-        until = time_series.index.max()
-        since = move_date(until, -45)
+    def set_slope_and_r2(self, component_id, bearing, plane, slope_length, feature, slope, r2):
+        if component_id not in self._slope:
+            self._slope[component_id] = {}
+            self._r2[component_id] = {}
+        if bearing not in self._slope[component_id]:
+            self._slope[component_id][bearing] = {}
+            self._r2[component_id][bearing] = {}
+        if plane not in self._slope[component_id][bearing]:
+            self._slope[component_id][bearing][plane] = {}
+            self._r2[component_id][bearing][plane] = {}
+        if slope_length not in self._slope[component_id][bearing][plane]:
+            self._slope[component_id][bearing][plane][slope_length] = {}
+            self._r2[component_id][bearing][plane][slope_length] = {}
 
-        to_add = []
-
-        dt = since
-        while dt <= until:
-            if dt not in time_series.index:
-                to_add.append({'datetime': dt, list(time_series.columns)[0]: np.nan})
-            dt = move_date(dt, 1, 'hours')
-        time_series = time_series.append(pd.DataFrame(to_add).set_index('datetime'))
-        time_series = time_series.sort_index()
-        return time_series
-
-    def set_slope_and_r2(self, component_id, bearing, plane, feature, slope, r2):
-        self._slope[component_id][bearing][plane][feature] = slope
-        self._r2[component_id][bearing][plane][feature] = r2
-        self.trend_scores[feature].append(abs(slope * r2))
+        self._slope[component_id][bearing][plane][slope_length][feature] = slope
+        self._r2[component_id][bearing][plane][slope_length][feature] = r2
+        self.trend_scores[feature].append(slope * r2)

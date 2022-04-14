@@ -23,7 +23,10 @@ class ModelDataParser:
                 continue
             parsed_record = {'session_id': record._label['session_id']}
             for feature in Config.AVAILABLE_FEATURES:
-                parsed_record[feature] = max(record.trend_scores[feature])
+                if not record.trend_scores[feature]:
+                    parsed_record[feature] = None
+                else:
+                    parsed_record[feature] = max(record.trend_scores[feature])
             parsed_records.append(parsed_record)
             labels.append(label)
         self.X = pd.DataFrame(parsed_records)

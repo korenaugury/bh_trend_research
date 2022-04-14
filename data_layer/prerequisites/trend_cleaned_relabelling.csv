@@ -18,7 +18,7 @@ machine_id,session_id,orig_review,mhi_change,review,until,additional_info,featur
 5ded00d1f900950001fefb92,60297863e4af96496340aa1c,True,False,True,2021-02-14 19:00:01,Good trend,vibration_vel_rms
 5f5fca23ef7bf40001810b6f,6027131ed7d1df272e288ab7,True,False,True,2021-02-12 23:00:01,Good trend,vibration_acc_rms
 5f16af40ecca5100012db6b3,5fefa3fc7dce3517f14d65b7,False,False,False,2021-01-01 22:00:01,Small trend,
-5f54db83d8ef2c000182f6b7,5fefc893fbab9f20c3890ae0,False,False,True,2021-01-02 01:00:01,Good trend,vibration_vel_order__0
+5f54db83d8ef2c000182f6b7,5fefc893fbab9f20c3890ae0,False,False,False,2021-01-02 01:00:01,Small trend,vibration_vel_order__0
 5c75ffb2517fa800017d6cb3,5fefdad0cd78562e29840493,True,False,False,2021-01-02 02:00:01,Cliff,
 5f54dd497546020001758bf5,5fefe4def9d8566aa94efd4d,True,False,True,2021-01-02 03:00:01,Good trend,vibration_acc_rms
 5f16d89decca5100012ddf95,602b902bccbec95b46a3ef28,False,False,True,2021-02-16 07:00:01,Good trend,vibration_vel_order__0
@@ -6794,3 +6794,4 @@ machine_id,session_id,orig_review,mhi_change,review,until,additional_info,featur
 5f27962386c85b00016a4c08,5feba57163aa995e0f291dcd,True,False,False,2020-12-29 21:00:01,Nonsense,
 5c473d0ba81e6a000161f0bf,5fec26b7c1ed7f6729f118a4,True,False,True,2020-12-30 05:00:01,Good trend,vibration_env_rms
 5e5fa3aa3ce9c60001334e61,5fecabadfa227e40026463bb,True,False,True,2020-12-30 13:00:01,Small trend,vibration_vel_rms
+5c9a0e05269fde0001a0c836,60e2b10911c28e52adce4dbd,True,False,False,2021-07-05 07:00:01,Small trend,

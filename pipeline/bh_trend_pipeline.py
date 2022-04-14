@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 
+from analysis_layer.analyzer import Analyzer
 from configuration.config import Config
 from data_layer.processing.slope_calculator import SlopeCalculator
 from data_layer.time_seires.time_series_builder import TimeSeriesBuilder
@@ -17,6 +18,7 @@ class BHTrendPipeline:
         self._time_series_records = None
         self._slope_calculator = None
         self._model_data_parser = None
+        self._analyzer = None
         self._model = None
 
     def load_data(self):
@@ -45,6 +47,10 @@ class BHTrendPipeline:
     def parse_data_for_model(self):
         self._model_data_parser = ModelDataParser(self._time_series_records, self._labels)
         self._model_data_parser.parse()
+
+    def analyze(self):
+        self._analyzer = Analyzer(self._model_data_parser.X, self._model_data_parser.y)
+        self._analyzer.analyze()
 
     def fit_model(self):
         self._model = SimpleRuleModel(target_recall=0.8)
